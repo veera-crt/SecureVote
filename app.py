@@ -533,6 +533,14 @@ def admin_candidates(election_id):
             manifesto = request.form['manifesto']
             image_url = request.form['image_url']
             
+            # Smart Google Drive Link Fix
+            import re
+            drive_pattern = r'drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/'
+            match = re.search(drive_pattern, image_url)
+            if match:
+                file_id = match.group(1)
+                image_url = f'https://drive.google.com/uc?export=view&id={file_id}'
+            
             try:
                 cur.execute("""
                     INSERT INTO candidates (election_id, name, party, manifesto, image_url)
