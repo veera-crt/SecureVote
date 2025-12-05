@@ -563,6 +563,32 @@ def admin_candidates(election_id):
 
     return render_template('admin_candidates.html', election=election, candidates=candidates)
 
+@app.route('/admin/candidates/delete/<int:candidate_id>')
+def delete_candidate(candidate_id):
+    if not session.get('is_admin'): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        # Get election_id before deleting to redirect back correctly
+        cur.execute("SELECT election_id FROM candidates WHERE id = %s", (candidate_id,))
+        result = cur.fetchone()
+        
+        if result:
+            election_id = result[0]
+            cur.execute("DELETE FROM candidates WHERE id = %s", (candidate_id,))
+            conn.commit()
+            flash('Candidate deleted successfully.', 'success')
+            return redirect(url_for('admin_candidates', election_id=election_id))
+        else:
+            flash('Candidate not found.', 'error')
+            return redirect(url_for('admin_elections'))
+            
+        cur.close()
+    finally:
+        release_db_connection(conn)
+
 @app.route('/admin/all-candidates')
 def admin_all_candidates():
     if not session.get('is_admin'): return redirect(url_for('login'))
