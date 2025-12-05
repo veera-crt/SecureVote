@@ -7,7 +7,9 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt
 from utils import encrypt_data, decrypt_data
+import re
 
 load_dotenv()
 
@@ -534,12 +536,12 @@ def admin_candidates(election_id):
             image_url = request.form['image_url']
             
             # Smart Google Drive Link Fix
-            import re
-            drive_pattern = r'drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/'
-            match = re.search(drive_pattern, image_url)
-            if match:
-                file_id = match.group(1)
-                image_url = f'https://drive.google.com/uc?export=view&id={file_id}'
+            if image_url:
+                drive_pattern = r'drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/'
+                match = re.search(drive_pattern, image_url)
+                if match:
+                    file_id = match.group(1)
+                    image_url = f'https://drive.google.com/uc?export=view&id={file_id}'
             
             try:
                 cur.execute("""
