@@ -403,6 +403,13 @@ def reject_user(user_id):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
+        
+        # Decrement vote counts for candidates voted by this user
+        cur.execute("SELECT candidate_id FROM votes WHERE voter_id = %s", (user_id,))
+        user_votes = cur.fetchall()
+        for v in user_votes:
+            cur.execute("UPDATE candidates SET vote_count = vote_count - 1 WHERE id = %s", (v[0],))
+            
         cur.execute("DELETE FROM users WHERE id = %s RETURNING email", (user_id,))
         email = cur.fetchone()[0]
         conn.commit()
@@ -614,6 +621,13 @@ def delete_voter(user_id):
     conn = get_db_connection()
     try:
         cur = conn.cursor()
+        
+        # Decrement vote counts for candidates voted by this user
+        cur.execute("SELECT candidate_id FROM votes WHERE voter_id = %s", (user_id,))
+        user_votes = cur.fetchall()
+        for v in user_votes:
+            cur.execute("UPDATE candidates SET vote_count = vote_count - 1 WHERE id = %s", (v[0],))
+            
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         cur.close()
