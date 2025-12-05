@@ -14,24 +14,16 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-from psycopg2 import pool
 
-# Database Connection Pool
-try:
-    db_pool = psycopg2.pool.ThreadedConnectionPool(
-        1, 20,
-        os.getenv('DATABASE_URL')
-    )
-    if db_pool:
-        print("Connection pool created successfully")
-except (Exception, psycopg2.DatabaseError) as error:
-    print("Error while connecting to PostgreSQL", error)
+
+
 
 def get_db_connection():
-    return db_pool.getconn()
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    return conn
 
 def release_db_connection(conn):
-    db_pool.putconn(conn)
+    conn.close()
 
 # Mail Configuration
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
@@ -43,25 +35,23 @@ app.config['BCRYPT_LOG_ROUNDS'] = 4 # Faster hashing for development/speed
 mail = Mail(app)
 bcrypt = Bcrypt(app)
 
-import threading
+
 
 # --- Helper Functions ---
 def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
-def send_email_thread(app, msg):
-    with app.app_context():
-        try:
-            mail.send(msg)
-            print(f"Email sent successfully to {msg.recipients}")
-        except Exception as e:
-            print(f"Failed to send email: {e}")
+
 
 def send_email(to, subject, body):
     msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[to])
     msg.body = body
-    # Run in a separate thread to avoid blocking
-    threading.Thread(target=send_email_thread, args=(app, msg)).start()
+    try:
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False
     return True
 
 # --- Routes ---
