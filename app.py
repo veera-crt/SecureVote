@@ -444,6 +444,7 @@ def admin_elections():
                 """, (title, description, start_date, end_date, status))
                 conn.commit()
                 flash('Election created successfully!', 'success')
+                return redirect(url_for('admin_elections'))
             except Exception as e:
                 conn.rollback()
                 flash(f'Error creating election: {e}', 'error')
@@ -549,7 +550,9 @@ def admin_candidates(election_id):
                     VALUES (%s, %s, %s, %s, %s)
                 """, (election_id, name, party, manifesto, image_url))
                 conn.commit()
+                conn.commit()
                 flash('Candidate added successfully!', 'success')
+                return redirect(url_for('admin_candidates', election_id=election_id))
             except Exception as e:
                 conn.rollback()
                 flash(f'Error adding candidate: {e}', 'error')
